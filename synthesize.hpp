@@ -25,4 +25,4 @@ void ConnectedComponents(Graph& G, int ans[]);
 void BetweennessCentality(Graph& G, double ans[]);
 void TriangleCount(Graph& G, int& ans);
 void SingleSourceShortestPath(Graph& G, int ans[]);
-void BUILD(Anstype& ans);
+void topfun(uint32_t num_nodes, uint64_t num_edges, pair_uint *edges, Anstype& ans);

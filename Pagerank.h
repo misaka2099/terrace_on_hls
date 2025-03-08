@@ -26,7 +26,7 @@
 #include "math.h"
 #include <iostream>
 #include "Map.cpp"
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 
 // template <class vertex>
 template<typename T>
@@ -136,7 +136,7 @@ T* PR_S(Graph& G, long maxIters) {
   // VertexSubset Frontier = VertexSubset((uint32_t)0, n);
   
   long iter = 0;
-  printf("max iters %lu\n", maxIters);
+  // printf("max iters %lu\n", maxIters);
   while(iter++ < maxIters) {
     //printf("\t running iteration %lu\n", iter);
     // using flat snapshot

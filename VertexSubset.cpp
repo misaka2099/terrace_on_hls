@@ -113,13 +113,13 @@ public:
       is_sparse = false;
       return;
     }
-    queue = mynewobj(SlidingQueue<int32_t>,max_el);
+    queue = mynewobj<SlidingQueue<int32_t>>(max_el);
     queue->push_back(e);
     queue->slide_window();
   }
   VertexSubset(bool *els, uint64_t len)
       : all(false), is_sparse(false), max_el(len) {
-    ba =  mynewobj(BitArray,max_el);
+    ba =  mynewobj<BitArray>(max_el);
     for(uint64_t i = 0; i < max_el; i++) {
       if (els[i]) {
         ba->set(i);
@@ -154,7 +154,7 @@ public:
       queue_array = NULL;
       if (is_sparse) {
         if (other.queue) {
-          queue = mynewobj(SlidingQueue<int32_t>,*other.queue, max_el);
+          queue = mynewobj<SlidingQueue<int32_t>>(*other.queue, max_el);
         }
         if (other.queue_array) {
           queue_array = (QueueBuffer<int32_t> *)mymalloc(
@@ -171,14 +171,14 @@ public:
 
       } else {
         if (other.ba) {
-          ba = mynewobj(BitArray,*other.ba);
+          ba = mynewobj<BitArray>(*other.ba);
         }
       }
     } else { // just create something similar where we will push the next set of data into
       // sparse and dense stay they way they are, will be changed by something else
       // all turns to dense, if we knew it was going to stay as all we would have no output and not use a new vertexsubset anyway
       if (is_sparse) {
-        queue = mynewobj(SlidingQueue<int32_t>,*other.queue, max_el);
+        queue = mynewobj<SlidingQueue<int32_t>>(*other.queue, max_el);
         // queue = new SlidingQueue<int32_t>(max_el);
         queue_array = (QueueBuffer<int32_t> *)mymalloc(
             4 * sizeof(QueueBuffer<int32_t>) * 1);
@@ -187,7 +187,7 @@ public:
         }
       } else {
         all = false;
-        ba = mynewobj(BitArray,max_el);
+        ba = mynewobj<BitArray>(max_el);
         // ba = new BitArray(max_el);
       }
     }
@@ -221,7 +221,7 @@ public:
     // printf("converting sparse to dense\n");
     is_sparse = false;
     // ba = new BitArray(max_el);
-    ba = mynewobj(BitArray,max_el);
+    ba = mynewobj<BitArray>(max_el);
     // need an atomic setter to work in parallel
     for (uint32_t i = queue->shared_out_start; i < queue->shared_out_end; i++) {
       ba->set(queue->shared[i]);
@@ -234,7 +234,7 @@ public:
     // printf("converting dense to sparse\n");
     is_sparse = true;
     // queue = new SlidingQueue<int32_t>(max_el);
-    queue = mynewobj (SlidingQueue<int32_t>,max_el);
+    queue = mynewobj <SlidingQueue<int32_t>>(max_el);
     queue_array = (QueueBuffer<int32_t> *)mymalloc(
         4 * sizeof(QueueBuffer<int32_t>) * 1);
     for (int i = 0; i < 1; i++) {

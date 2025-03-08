@@ -2,7 +2,7 @@
 #include "Map.cpp"
 #include <vector>
 // #include "parallel_util.h"
-#include "io_util.h"
+// #include "io_util.h"
 
 // This code is part of the project "Ligra: A Lightweight Graph Processing
 // Framework for Shared Memory", presented at Principles and Practice of 
@@ -28,7 +28,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 typedef double fType;
 typedef uint32_t uintE;
 

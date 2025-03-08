@@ -23,7 +23,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 #define WEIGHTED 0
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 #include "Map.cpp"
 // #include "parallel_util.h"
 #include <climits>
@@ -68,7 +68,7 @@ int32_t* SSSP_BF(Graph &G, long start) {
 // void SSSP_BF(Graph &G, long start) {
   long n = G.get_num_vertices();
   // test
-  printf("BF start %lu, num_vertices %lu\n", start, n);
+  // printf("BF start %lu, num_vertices %lu\n", start, n);
 
   //initialize ShortestPathLen to "infinity"
   int32_t* ShortestPathLen = mynew(int32_t*);
@@ -82,7 +82,7 @@ int32_t* SSSP_BF(Graph &G, long start) {
   long round = 0;
 
   while(frontier.not_empty()) { // while frontier is not empty
-    printf("round %lu, current frontier size: %lu\n", round, frontier.get_n());
+    // printf("round %lu, current frontier size: %lu\n", round, frontier.get_n());
     // if(round == 1) {
     if (round == n) {
       //negative weight cycle

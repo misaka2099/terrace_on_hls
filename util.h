@@ -49,25 +49,40 @@
 #endif
 
 // find index of first 1-bit (least significant bit)
-static inline int bsf_word(int word) {
-  int result;
-  __asm__ volatile("bsf %1, %0" : "=r"(result) : "r"(word));
-  return result;
-}
+// static inline int bsf_word(int word) {
+//   int result;
+//   __asm__ volatile("bsf %1, %0" : "=r"(result) : "r"(word));
+//   return result;
+// }
 
 static inline int bsr_word(int word) {
-  int result;
-  __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  int result = -1;
+  // __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  while (word > 0)
+  {
+    word >>= 1;
+    result++;
+  }
   return result;
 }
 static inline uint32_t bsr_word(uint32_t word) {
-  uint32_t result;
-  __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  uint32_t result = -1;
+  // __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  while (word > 0)
+  {
+    word >>= 1;
+    result++;
+  }
   return result;
 }
 static inline uint64_t bsr_word(uint64_t word) {
-  uint64_t result;
-  __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  uint64_t result = -1;
+  // __asm__ volatile("bsr %1, %0" : "=r"(result) : "r"(word));
+  while (word > 0)
+  {
+    word >>= 1;
+    result++;
+  }
   return result;
 }
 
@@ -88,10 +103,10 @@ struct trip_uint {
 } ;
 
 namespace graphstore {
-	float cal_time_elapsed(struct timeval* start, struct timeval* end);
-	/* Print elapsed time using the start and end timeval */
-	void print_time_elapsed(std::string desc, struct timeval* start, struct
-													timeval* end);
+	// float cal_time_elapsed(struct timeval* start, struct timeval* end);
+	// /* Print elapsed time using the start and end timeval */
+	// void print_time_elapsed(std::string desc, struct timeval* start, struct
+	// 												timeval* end);
   custom_vector<uint32_t> get_random_permutation(uint32_t num);
 }
 #endif

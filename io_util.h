@@ -1,10 +1,9 @@
 #pragma once
-// #define newA(__E,__n) (__E*) malloc((__n)*sizeof(__E))
+#define newA(__E,__n) (__E*) malloc((__n)*sizeof(__E))
 #include "util.h"
 #include <iostream>
 #include <map>
-#include <cstdint>
-#include "memory_pool.hpp"
+
 #define MAXVAL 254
 
 uint32_t rand_in_range(uint32_t max) { return rand() % max; }
@@ -19,7 +18,7 @@ struct words {
   words() {}
   words(char* C, long nn, char** S, long mm)
     : Chars(C), n(nn), Strings(S), m(mm) {}
-  void del() {myfree(Chars); myfree(Strings);}
+  void del() {free(Chars); free(Strings);}
 };
 
 inline bool isSpace(char c) {
@@ -38,14 +37,14 @@ words stringToWords(char *Str, uint64_t n) {
     if (isSpace(Str[i])) Str[i] = 0; 
 
   // mark start of words
-  bool *FL = mynew(bool *);
+  bool *FL = newA(bool,n);
   FL[0] = Str[0];
   for (uint64_t i=1; i < n; i++) FL[i] = Str[i] && !Str[i-1];
 
   uint32_t worker_count = 1;
-  custom_vector<uint64_t> sub_counts(worker_count, 0);
+  std::vector<uint64_t> sub_counts(worker_count, 0);
   uint64_t section_count = (n/worker_count)+1;
-  for (uint64_t i = 0; i < worker_count; i++) {
+  for(uint64_t i = 0; i < worker_count; i++) {
     uint64_t start = i * section_count;
     uint64_t end = std::min((i+1)*section_count, n);
     uint64_t local_count = 0;
@@ -72,8 +71,8 @@ words stringToWords(char *Str, uint64_t n) {
     j++;
   }
   */
-  uint64_t *offsets = mynew(uint64_t*);
-  for (uint64_t i = 0; i < worker_count; i++) {
+  uint64_t *offsets = newA(uint64_t, m);
+  for(uint64_t i = 0; i < worker_count; i++) {
     uint64_t start = i * section_count;
     uint64_t end = std::min((i+1)*section_count, n);
     uint64_t offset;
@@ -87,10 +86,10 @@ words stringToWords(char *Str, uint64_t n) {
   }
 
   // pointer to each start of word
-  char **SA = mynew (char**);
-  for  (uint64_t j=0; j < m; j++) SA[j] = Str+offsets[j];
+  char **SA = newA(char*, m);
+  for (uint64_t j=0; j < m; j++) SA[j] = Str+offsets[j];
 
-  myfree(offsets); myfree(FL);
+  free(offsets); free(FL);
   return words(Str,n,SA,m);
 }
 char* readStringFromFile(const char *fileName, long* length) {
@@ -102,7 +101,7 @@ char* readStringFromFile(const char *fileName, long* length) {
   long end = file.tellg();
   file.seekg (0, std::ios::beg);
   long n = end - file.tellg();
-  char* bytes = mynew(char*);
+  char* bytes = newA(char,n+1);
   file.read (bytes,n);
   file.close();
   *length = n;
@@ -119,7 +118,7 @@ pair_uint *get_edges_from_file_adj_sym(std::string filename,
     exit(-1);
   }
   uint64_t len = W.m -1;
-  uint64_t * In = mynew(uint64_t*);
+  uint64_t * In = newA(uint64_t, len);
   {for (uint64_t i=0; i < len; i++) In[i] = atol(W.Strings[i + 1]);}
   W.del();
   uint64_t n = In[0];
@@ -131,8 +130,8 @@ pair_uint *get_edges_from_file_adj_sym(std::string filename,
   }
   uint64_t* offsets = In+2;
   uint64_t* edges = In+2+n;
-  pair_uint *edges_array = (pair_uint *)mymalloc(m * sizeof(pair_uint));
-  for  (uint32_t i=0; i < n; i++) {
+  pair_uint *edges_array = (pair_uint *)malloc(m * sizeof(pair_uint));
+  for (uint32_t i=0; i < n; i++) {
     uint64_t o = offsets[i];
     uint64_t l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
     for (uint64_t j = o; j < o+l; j++) {
@@ -155,7 +154,7 @@ trip_uint *get_wgh_edges_from_file_adj_sym(std::string filename,
     exit(-1);
   }
   uint64_t len = W.m -1;
-  uint64_t * In = mynew(uint64_t*);
+  uint64_t * In = newA(uint64_t, len);
   {for (uint64_t i=0; i < len; i++) In[i] = atol(W.Strings[i + 1]);}
   W.del();
   uint64_t n = In[0];
@@ -168,8 +167,8 @@ trip_uint *get_wgh_edges_from_file_adj_sym(std::string filename,
   uint64_t* offsets = In+2;
   uint64_t* edges = In+2+n;
   uint64_t* weights = In+2+n+m;
-  trip_uint *edges_array = (trip_uint *)mymalloc(m * sizeof(trip_uint));
-  for  (uint32_t i=0; i < n; i++) {
+  trip_uint *edges_array = (trip_uint *)malloc(m * sizeof(trip_uint));
+  for (uint32_t i=0; i < n; i++) {
     uint64_t o = offsets[i];
     uint64_t l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
     for (uint64_t j = o; j < o+l; j++) {
@@ -187,7 +186,7 @@ trip_uint * get_wgh_edges_from_file(const char *filename, int zero_indexed, bool
   fp = fopen(filename, "r");
   setvbuf ( fp , NULL , _IOFBF , 1<<20 );
   size_t buf_size = 64;
-  char *line = (char *) mymalloc(buf_size);
+  char *line = (char *) malloc(buf_size);
   uint64_t line_count = 0;
   if (fp) {
     while (getline(&line, &buf_size, fp) != -1) {
@@ -204,7 +203,7 @@ trip_uint * get_wgh_edges_from_file(const char *filename, int zero_indexed, bool
   }
   *edge_count = line_count;
   rewind(fp);
-  trip_uint *edges = (trip_uint *) mymalloc(line_count * sizeof(trip_uint));
+  trip_uint *edges = (trip_uint *) malloc(line_count * sizeof(trip_uint));
   uint32_t num_nodes = 0;
   uint64_t index = 0;
   while (getline(&line, &buf_size, fp) != -1) {
@@ -234,7 +233,7 @@ trip_uint * get_wgh_edges_from_file(const char *filename, int zero_indexed, bool
   printf("weighted num edges %lu\n", index);
   fclose(fp);
     // return 0;
-  myfree(line);
+  free(line);
   *node_count = num_nodes;
   return edges;
 }
@@ -251,7 +250,7 @@ pair_uint * get_edges_from_file(const char *filename, int zero_indexed, bool add
   fp = fopen(filename, "r");
   setvbuf ( fp , NULL , _IOFBF , 1<<20 );
   size_t buf_size = 64;
-  char *line = (char *) mymalloc(buf_size);
+  char *line = (char *) malloc(buf_size);
   uint64_t line_count = 0;
   if (fp) {
     while (getline(&line, &buf_size, fp) != -1) {
@@ -269,7 +268,7 @@ pair_uint * get_edges_from_file(const char *filename, int zero_indexed, bool add
   *edge_count = line_count;
   printf("getting edges from file %s\n", filename);
   rewind(fp);
-  pair_uint *edges = (pair_uint *) mymalloc(line_count * sizeof(pair_uint));
+  pair_uint *edges = (pair_uint *) malloc(line_count * sizeof(pair_uint));
   uint32_t num_nodes = 0;
   uint64_t index = 0;
   while (getline(&line, &buf_size, fp) != -1) {
@@ -292,24 +291,24 @@ pair_uint * get_edges_from_file(const char *filename, int zero_indexed, bool add
   }
   fclose(fp);
     // return 0;
-  myfree(line);
+  free(line);
   *node_count = num_nodes;
   return edges;
 }
 
 typedef std::pair<uint32_t, uint32_t> upair;
-custom_map<upair, uint32_t> get_unique_edges_from_file(const char *filename) {
+std::map<upair, uint32_t> get_unique_edges_from_file(const char *filename) {
   FILE *fp;
   fp = fopen(filename, "r");
   setvbuf ( fp , NULL , _IOFBF , 1<<20 );
   size_t buf_size = 64;
-  char *line = (char *) mymalloc(buf_size);
+  char *line = (char *) malloc(buf_size);
   // uint64_t line_count = 0;
   if (!fp) {
     printf("file was not opened\n");
     exit(EXIT_FAILURE);
   }
-  custom_map<upair, uint32_t> edges;
+  std::map<upair, uint32_t> edges;
   printf("getting edges from file %s\n", filename);
   while (getline(&line, &buf_size, fp) != -1) {
     if (line[0] == '#') continue;
@@ -326,6 +325,6 @@ custom_map<upair, uint32_t> get_unique_edges_from_file(const char *filename) {
   }
   fclose(fp);
     // return 0;
-  myfree(line);
+  free(line);
   return edges;
 }

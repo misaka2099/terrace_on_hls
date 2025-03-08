@@ -23,7 +23,7 @@
 // #include "PMA_Lock.hpp"
 
 // #include "integerSort/blockRadixSort/blockRadixSort.h"
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 #define ENABLE_PMA_LOCK 0
 
 typedef struct _edge {

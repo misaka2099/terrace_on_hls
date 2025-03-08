@@ -1,6 +1,5 @@
 #include "synthesize.hpp"
-
-
+#include "io_util.h"
 int main()
 {
     Anstype ref;
@@ -46,7 +45,11 @@ int main()
     ref.SSSP[9] = 2;
 
     Anstype out;
-    BUILD(out);
+    uint32_t num_nodes;
+    uint64_t num_edges;
+    pair_uint *edges = get_edges_from_file_adj_sym(std::string("/home/sail/lyf/synthesize_terrace/small.adj"), &num_edges,&num_nodes);
+    topfun(num_nodes, num_edges, edges, out);
+    free (edges);
     
     if (ref.TC != out.TC)
     {
@@ -87,6 +90,7 @@ int main()
             return -1;
         }
     }
+    std::cout << "all right" << std::endl;
     return 0;
     
 }

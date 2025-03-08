@@ -28,7 +28,7 @@
 // Tuning", ICDE 2015. Currently only works with uncompressed graphs,
 // and not with compressed graphs.
 #include "Map.cpp"
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 //assumes sorted neighbor lists
 long countCommon(Graph &G, uint32_t a, uint32_t b) { 
   Graph::NeighborIterator it_A(&G, a);
@@ -72,7 +72,8 @@ struct countF { //for edgeMap
 // void TC(Graph& G){
 uint64_t TC(Graph& G) {
   uint32_t n = G.get_num_vertices();
-  custom_vector<uint64_t> counts(1*8, 0);
+  // custom_vector<uint64_t> counts(1*8, 0);
+  custom_vector<uint64_t> counts;
   VertexSubset Frontier(0,n,true); //frontier contains all vertices
 
   edgeMap(G,Frontier,countF(G,counts), false);

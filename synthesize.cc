@@ -1,8 +1,8 @@
-#include "io_util.h"
+
 #include "memory_pool.hpp"
-#include "util.h"
+
 #include <iostream>
-#include <string>
+
 #include "graph.h"
 #include "BFS.h"
 #include "Pagerank.h"
@@ -13,7 +13,6 @@
 #include "synthesize.hpp"
 using namespace graphstore;
 using std::cout;
-using std::endl;
 
 void BFS(Graph& G, int ans[])
 {
@@ -110,7 +109,7 @@ void TriangleCount(Graph& G, int& ans)
 
 void SingleSourceShortestPath(Graph& G, int ans[])
 {
-    cout << "----------------------------------------\n";
+    // cout << "----------------------------------------\n";
     long src = 3;
     // std::cout << "Running SSSP" << "src: "<< src << std::endl;
     auto result = SSSP_BF(G,src);
@@ -121,25 +120,21 @@ void SingleSourceShortestPath(Graph& G, int ans[])
     }
     myfree(result);
 }
-void BUILD(Anstype& ans)
+
+void topfun(uint32_t num_nodes, uint64_t num_edges, pair_uint *edges, Anstype &ans)
 {
-    uint32_t num_nodes;
-    uint64_t num_edges;
-    pair_uint *edges = get_edges_from_file_adj_sym(std::string("/home/sail/lyf/synthesize_terrace/small.adj"), &num_edges,&num_nodes);
     Graph graph (num_nodes);
-    custom_vector<uint32_t> new_srcs(num_edges);
-    custom_vector<uint32_t> new_dests(num_edges);
+    // custom_vector<uint32_t> new_srcs(num_edges);
+    custom_vector<uint32_t> new_srcs;
+    // custom_vector<uint32_t> new_dests(num_edges);
+    custom_vector<uint32_t> new_dests;
             for (uint32_t i = 0; i < num_edges; i++) {
             new_srcs[i] = edges[i].x;
             new_dests[i] = edges[i].y;
     }
     auto perm = get_random_permutation(num_edges);
-    graph.add_edge_batch(new_srcs.data(), new_dests.data(), num_edges, perm);
-
-    myfree(edges);
-    new_srcs.clear();
-    new_dests.clear();
-
+    graph.add_edge_batch(new_srcs.storage, new_dests.storage, num_edges, perm);
+    
     BFS(graph, ans.BFS);
     PageRank(graph, ans.PageRank);
     ConnectedComponents(graph, ans.CC);

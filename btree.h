@@ -72,16 +72,29 @@ class BTreeNode {
         }
       }
 
-    template <class F> void map_tree(F &f) {
-      map_node(f);
-      if (!is_leaf) {
-        //parallel_for (uint32_t i = 0; i < num_keys+1; i++) {
-        for (uint32_t i = 0; i < num_keys+1; i++) {
-          if (children[i] != nullptr)
-            children[i]->map_tree(f);
-        }
+      template <class F>
+      void map_tree(F &f) {
+          // Stack to keep track of nodes to visit
+          custom_stack<BTreeNode<T, W>*> nodeStack;
+          nodeStack.push(this);
+      
+          while (!nodeStack.empty()) {
+              BTreeNode<T, W>* currentNode = nodeStack.top();
+              nodeStack.pop();
+      
+              // Process the current node
+              currentNode->map_node(f);
+      
+              // Push children onto the stack if the current node is not a leaf
+              if (!currentNode->is_leaf) {
+                  for (uint32_t i = 0; i < currentNode->num_keys + 1; i++) {
+                      if (currentNode->children[i] != nullptr) {
+                          nodeStack.push(currentNode->children[i]);
+                      }
+                  }
+              }
+          }
       }
-    }
 
     class NodeIterator {
       public:
@@ -286,59 +299,94 @@ bool BTreeNode<T, W>::insertNonFull(T k, W w) {
 #else
 bool BTreeNode<T, W>::insertNonFull(T k) {
 #endif
-  // Initialize index as index of rightmost element
-  uint32_t idx;
-  for (idx = 0; idx < num_keys; idx++) {
-    if (keys[idx] < k)
-      continue;
-    else if (k == keys[idx]) {
-#if WEIGHTED
-      weights[idx] = w;
-#endif
-      return false;
-    }
-    else
-      break;
-  }
+    // Stack to keep track of the path from root to leaf
+    custom_stack<BTreeNode<T, W>*> nodeStack;
+    BTreeNode<T, W>* currentNode = this;
+    uint32_t idx;
 
-  if (is_leaf) { // If this is a leaf node
-    memmove(&keys[idx+1], &keys[idx], (MAX_KEYS-idx-1)*sizeof(keys[0]));
+    // Traverse the tree to find the leaf node where the key should be inserted
+    while (true) {
+        idx = 0;
+        while (idx < currentNode->num_keys && currentNode->keys[idx] < k) {
+            idx++;
+        }
+
+        if (currentNode->is_leaf) {
+            break;
+        }
+
+        if (currentNode->children[idx]->num_keys == MAX_KEYS) {
+            // Split the child node
+            currentNode->splitChild(idx, currentNode->children[idx]);
+
+            // After split, the middle key of children[idx] goes up and
+            // children[idx] is split into two. See which of the two
+            // is going to have the new key
+            if (currentNode->keys[idx] == k) {
 #if WEIGHTED
-    memmove(&weights[idx+1], &weights[idx], (MAX_KEYS-idx-1)*sizeof(weights[0]));
+                currentNode->weights[idx] = w;
 #endif
-    // Insert the new key at found location
-    keys[idx] = k;
+                return false;
+            } else if (currentNode->keys[idx] < k) {
+                idx++;
+            }
+        }
+
+        nodeStack.push(currentNode);
+        currentNode = currentNode->children[idx];
+    }
+
+    // Insert the new key into the leaf node
+    memmove(&currentNode->keys[idx+1], &currentNode->keys[idx], (MAX_KEYS - idx - 1) * sizeof(currentNode->keys[0]));
 #if WEIGHTED
-    weights[idx] = w;
+    memmove(&currentNode->weights[idx+1], &currentNode->weights[idx], (MAX_KEYS - idx - 1) * sizeof(currentNode->weights[0]));
 #endif
-    num_keys = num_keys+1;
+    currentNode->keys[idx] = k;
+#if WEIGHTED
+    currentNode->weights[idx] = w;
+#endif
+    currentNode->num_keys++;
+
+    // Propagate the split up the tree if necessary
+    while (!nodeStack.empty()) {
+        BTreeNode<T, W>* parent = nodeStack.top();
+        nodeStack.pop();
+
+        idx = 0;
+        while (idx < parent->num_keys && parent->keys[idx] < currentNode->keys[0]) {
+            idx++;
+        }
+
+        if (parent->children[idx]->num_keys == MAX_KEYS) {
+            // Split the child node
+            parent->splitChild(idx, parent->children[idx]);
+
+            // After split, the middle key of children[idx] goes up and
+            // children[idx] is split into two. See which of the two
+            // is going to have the new key
+            if (parent->keys[idx] == currentNode->keys[0]) {
+#if WEIGHTED
+                parent->weights[idx] = w;
+#endif
+                return false;
+            } else if (parent->keys[idx] < currentNode->keys[0]) {
+                idx++;
+            }
+        }
+
+        parent->children[idx] = currentNode;
+        currentNode = parent;
+    }
+
     return true;
-  } else { // If this node is not leaf
-    if (children[idx]->num_keys == MAX_KEYS) {// See if the found child is full
-      // If the child is full, then split it
-      splitChild(idx, children[idx]);
-
-      // After split, the middle key of children[idx] goes up and
-      // children[idx] is splitted into two. See which of the two
-      // is going to have the new key
-      if (keys[idx] == k)
-        return false;
-      else if (keys[idx] < k)
-        idx++;
-    }
-#if WEIGHTED
-    return children[idx]->insertNonFull(k, w);
-#else
-    return children[idx]->insertNonFull(k);
-#endif
-  }
 }
 
 template <class T, class W>
 void BTreeNode<T, W>::splitChild(uint32_t i, BTreeNode<T, W> *c) {
   // Create a new node which is going to store (MIN_KEYS-1) keys
   // of c
-  BTreeNode<T, W> *z = new BTreeNode<T, W>(c->is_leaf);
+  // BTreeNode<T, W> *z = new BTreeNode<T, W>(c->is_leaf);
+  BTreeNode<T, W> *z = mynewobj<BTreeNode<T, W>>(c->is_leaf);
   z->num_keys = MIN_KEYS - 1;
 
   // Copy the last (MIN_KEYS-1) keys of c to z
@@ -443,7 +491,8 @@ bool BTree<T, W>::insert(T k) {
   // If tree is empty
   if (root == nullptr)  {
     // Allocate memory for root
-    root = new BTreeNode<T, W>(true);
+    // root = new BTreeNode<T, W>(true);
+    root = mynewobj<BTreeNode<T, W>,bool>( true) ;
     root->keys[0] = k;  // Insert key
 #if WEIGHTED
     root->weights[0] = w;  // Insert weight
@@ -454,7 +503,8 @@ bool BTree<T, W>::insert(T k) {
     // If root is full, then tree grows in height
     if (root->num_keys == MAX_KEYS) {
       // Allocate memory for new root
-      BTreeNode<T, W> *s = new BTreeNode<T, W>(false);
+      // BTreeNode<T, W> *s = new BTreeNode<T, W>(false);
+      BTreeNode<T, W> *s = mynewobj<BTreeNode<T, W>>(false);
 
       // Make old root as child of new root
       s->children[0] = root;

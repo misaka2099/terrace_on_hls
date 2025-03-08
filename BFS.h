@@ -1,6 +1,6 @@
 #pragma once
 #include "Map.cpp"
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 // This code is part of the project "Ligra: A Lightweight Graph Processing
 // Framework for Shared Memory", presented at Principles and Practice of 
 // Parallel Programming, 2013.

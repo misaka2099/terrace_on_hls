@@ -115,10 +115,17 @@ static inline void unlock(uint32_t *data)
       };
 
       Graph(uint32_t size); // create a graph with the given size (#num nodes)
-      Graph(std::string prefix); // read graph from disk
+      // Graph(string prefix); // read graph from disk
       ~Graph();
-
-      void serialize(std::string prefix); // write graph to disk
+      Graph(Graph && other)
+      {
+        inplace_size = other.inplace_size;
+        num_vertices = other.num_vertices;
+        vertices = other.vertices;
+        other.vertices = nullptr;
+        second_level = other.second_level;
+      }
+      // void serialize(string prefix); // write graph to disk
 
       // add edge between vertices s and d
       // if edge already exists will not do anything.
@@ -234,6 +241,7 @@ static inline void unlock(uint32_t *data)
   }
 
   inline Graph::~Graph() {
+    if (vertices != nullptr)
     myfree(vertices);
   }
 
@@ -385,7 +393,7 @@ inline 	void Graph::add_btree(vertex *srcs, vertex	*dests, uint32_t i,
 		lock(&vertices[s].degree);
 #endif
 		if (vertices[s].aux_neighbors == nullptr) {
-			tl_container *container = new tl_container();
+			tl_container *container = mynewobj<tl_container>();
 			vertices[s].aux_neighbors = container;
 			//TODO: the PMA might have more edges than MEDIUM_DEGREE.. Adding
 			//twice the space might be safe
@@ -463,7 +471,7 @@ inline void Graph::add_edge_batch(vertex *srcs, vertex *dests, uint32_t edge_cou
 									array_btree_node);
 #endif
 		}
-    printf("starting to insert items to pma\n");
+    // printf("starting to insert items to pma\n");
 		// insert edges from the sec list to PMA
 		for (uint32_t i = 0; i < edge_count; i++) {
 			//auto idx = i;
@@ -486,7 +494,7 @@ inline void Graph::add_edge_batch(vertex *srcs, vertex *dests, uint32_t edge_cou
 #endif
 			}
 		}
-    printf("done with pma\n");
+    // printf("done with pma\n");
 		
 		// insert edges from sec list to b-tree 
 		for (uint32_t i = 0; i < parts.size()-1; i++) {
@@ -613,7 +621,7 @@ inline int Graph::add_edge(const vertex s, const vertex d) {
     degree = this->degree(s);
     // check to see if the second level needs to be moved to the third
     if (vertices[s].aux_neighbors == nullptr && degree > MEDIUM_DEGREE) {
-      tl_container *container = new tl_container();
+      tl_container *container = mynewobj<tl_container>();
       vertices[s].aux_neighbors = container;
       uint32_t des[MEDIUM_DEGREE] = {0};
       uint32_t src[MEDIUM_DEGREE] = {0};

@@ -1,7 +1,6 @@
 #pragma once
 #include "graph.h"
 #include "VertexSubset.cpp"
-#include "memory_pool.hpp"
 using namespace graphstore;
 
 template<class F>

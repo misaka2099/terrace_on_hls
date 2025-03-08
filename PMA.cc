@@ -4,7 +4,7 @@
 using namespace std;
 
 #include "PMA.hpp"
-#include "memory_pool.hpp"
+// #include "memory_pool.hpp"
 # define assert(x)
 #define ENABLE_PMA_LOCK 0
 // given index, return the starting index of the leaf it is in
@@ -151,7 +151,7 @@ uint_t next_leaf(uint_t index, int loglogN) {
 // }
 
 void PMA::clear() {
-  printf("clear called\n");
+  // printf("clear called\n");
   uint_t n = 0;
   uint64_t task_id = __sync_fetch_and_add(&next_task_id, 2);
   // grab_all_locks(task_id, true, GENERAL);
@@ -216,7 +216,7 @@ uint64_t PMA::get_size() {
 #if ENABLE_PMA_LOCK == 1
   node_lock.lock_shared();
 #endif
-  uint64_t size = nodes.capacity() * sizeof(node_t);
+  uint64_t size = nodes.size() * sizeof(node_t);
   size += sizeof(PMA);
   size += (uint64_t)edges.N * sizeof(edge_t);
 #if ENABLE_PMA_LOCK == 1
@@ -226,49 +226,49 @@ uint64_t PMA::get_size() {
 }
 
 
-void print_array(edge_list_t *edges) {
-  printf("N = %d, logN = %d\n", edges->N, edges->logN);
-  for (uint_t i = 0; i < edges->N; i++) {
-    if (edges->dests[i]==NULL_VAL) {
-      printf("%d-x ", i);
-    } else if ((edges->dests[i]==SENT_VAL) || i == 0) {
-      uint32_t value = edges->vals[i];
-      if (value == NULL_VAL) {
-        value = 0;
-      }
-      printf("\n%d-s(%u):(?, ?) ", i, value);
-    } else {
-      printf("%d-(%d, %u) ", i, edges->dests[i], edges->vals[i]);
-    }
-  }
-  printf("\n\n");
-}
+// void print_array(edge_list_t *edges) {
+//   // printf("N = %d, logN = %d\n", edges->N, edges->logN);
+//   for (uint_t i = 0; i < edges->N; i++) {
+//     if (edges->dests[i]==NULL_VAL) {
+//       // printf("%d-x ", i);
+//     } else if ((edges->dests[i]==SENT_VAL) || i == 0) {
+//       uint32_t value = edges->vals[i];
+//       if (value == NULL_VAL) {
+//         value = 0;
+//       }
+//       // printf("\n%d-s(%u):(?, ?) ", i, value);
+//     } else {
+//       // printf("%d-(%d, %u) ", i, edges->dests[i], edges->vals[i]);
+//     }
+//   }
+//   printf("\n\n");
+// }
 
-void PMA::print_array(uint64_t worker_num) {
-  printf("worker num: %lu, N = %d, logN = %d, density_limit = %f\n", worker_num, edges.N, edges.logN, edges.density_limit);
-  for (uint_t i = 0; i < edges.N; i++) {
-    if (edges.dests[i]==NULL_VAL) {
-      printf("%d-x ", i);
-    } else if ((edges.dests[i] == SENT_VAL) || i == 0) {
-      uint32_t value = edges.vals[i];
-      if (value == NULL_VAL) {
-        value = 0;
-      }
-      printf("\n worker num: %lu, %d-s(%u):(%d, %d)(%d) ", worker_num, i, value, nodes[value].beginning,
-             nodes[value].end, nodes[value].num_neighbors);
-      #ifndef NDEBUG
-      #if ENABLE_PMA_LOCK == 1
-        printf("(%s, %d by %u)", nodes[value].lock.check_unlocked() ? "Unlocked": "Locked", nodes[value].lock.reason, nodes[value].lock.owner);
-      #endif
-      #else
-        printf(")");
-      #endif
-    } else {
-      printf("%d-(%d, %u) ", i, edges.dests[i], edges.vals[i]);
-    }
-  }
-  printf("\n\n");
-}
+// void PMA::print_array(uint64_t worker_num) {
+//   printf("worker num: %lu, N = %d, logN = %d, density_limit = %f\n", worker_num, edges.N, edges.logN, edges.density_limit);
+//   for (uint_t i = 0; i < edges.N; i++) {
+//     if (edges.dests[i]==NULL_VAL) {
+//       printf("%d-x ", i);
+//     } else if ((edges.dests[i] == SENT_VAL) || i == 0) {
+//       uint32_t value = edges.vals[i];
+//       if (value == NULL_VAL) {
+//         value = 0;
+//       }
+//       printf("\n worker num: %lu, %d-s(%u):(%d, %d)(%d) ", worker_num, i, value, nodes[value].beginning,
+//              nodes[value].end, nodes[value].num_neighbors);
+//       #ifndef NDEBUG
+//       #if ENABLE_PMA_LOCK == 1
+//         printf("(%s, %d by %u)", nodes[value].lock.check_unlocked() ? "Unlocked": "Locked", nodes[value].lock.reason, nodes[value].lock.owner);
+//       #endif
+//       #else
+//         printf(")");
+//       #endif
+//     } else {
+//       printf("%d-(%d, %u) ", i, edges.dests[i], edges.vals[i]);
+//     }
+//   }
+//   printf("\n\n");
+// }
 
 
 uint_t get_density_count(edge_list_t *list, uint_t index, uint_t len) {
@@ -336,7 +336,8 @@ uint_t get_density_count(edge_list_t *list, uint_t index, uint_t len) {
 }
 
 uint64_t get_density_count_par(edge_list_t *list, uint_t index, uint_t len, custom_vector<uint_t> &sub_counts) {
-  custom_vector<uint64_t> worker_counts(1*8);
+  // custom_vector<uint64_t> worker_counts(1*8);
+  custom_vector<uint64_t> worker_counts;
   uint32_t volatile  * volatile dests = list->dests;
   for(uint_t j = index; j < index+len; j+= REDISTRIBUTE_PAR_SIZE) {
     uint_t full = 0;
@@ -1407,7 +1408,7 @@ void PMA::insert(uint64_t task_id, uint_t index, uint32_t elem_dest, uint32_t el
   // while density too high, go up the implicit tree
   // go up to the biggest node above the density bound
   //printf("node_index = %d, desnsity = %f, density bound = %f\n", node_index, density, density_b.y);
-  custom_vector<uint_t> sub_counts(0);
+  custom_vector<uint_t> sub_counts;
   // while (density >= density_b) {
   while(density >= density_b) {
   // density >= (((double) edges.logN - 1) / edges.logN)) {
@@ -1446,7 +1447,7 @@ void PMA::insert(uint64_t task_id, uint_t index, uint32_t elem_dest, uint32_t el
       if (len <= REDISTRIBUTE_PAR_SIZE) {
         density_count = get_density_count(&edges, new_node_index, len);
       } else {
-        sub_counts.resize(len/REDISTRIBUTE_PAR_SIZE);
+        // sub_counts.resize(len/REDISTRIBUTE_PAR_SIZE);
         density_count = get_density_count_par(&edges, new_node_index, len, sub_counts);
       }
       // to help prevent double doubling by knowing how big it was on the last count
@@ -1645,7 +1646,8 @@ void PMA::remove(uint64_t task_id, uint_t index, uint32_t elem_dest, uint32_t sr
   // while density too high, go up the implicit tree
   // go up to the biggest node above the density bound
   //printf("node_index = %d, desnsity = %f, density bound = %f\n", node_index, density, density_b.y);
-  custom_vector<uint_t> sub_counts(0);
+  // custom_vector<uint_t> sub_counts(0);
+  custom_vector<uint_t> sub_counts;
   while (density <= density_b) {
     //printf("node_index = %d, desnsity = %f, density bound = %f, len = %d, worker = %lu\n", node_index, density, density_b.y, len, get_worker_num());
     len *= 2;
@@ -1682,7 +1684,7 @@ void PMA::remove(uint64_t task_id, uint_t index, uint32_t elem_dest, uint32_t sr
       if (len <= REDISTRIBUTE_PAR_SIZE) {
         density_count = get_density_count(&edges, new_node_index, len);
       } else {
-        sub_counts.resize(len/REDISTRIBUTE_PAR_SIZE);
+        // sub_counts.resize(len/REDISTRIBUTE_PAR_SIZE);
         density_count = get_density_count_par(&edges, new_node_index, len, sub_counts);
       }
       // to help prevent double doubling by knowing how big it was on the last count
@@ -2319,9 +2321,11 @@ void PMA::add_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_cou
     exit(-1);
   }
 
-  custom_vector<uint64_t> counts(num_workers+1);
+  // custom_vector<uint64_t> counts(num_workers+1);
+  custom_vector<uint64_t> counts;
   counts[0] = 0;
-  custom_vector<uint64_t> output_starts(num_workers);
+  // custom_vector<uint64_t> output_starts(num_workers);
+  custom_vector<uint64_t> output_starts;
   uint32_t increment_batch = edge_count / num_workers;
   //printf("starting merge\n");
   for (uint32_t i = 0; i < num_workers; i++) {
@@ -2629,9 +2633,11 @@ void PMA::remove_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_
     printf("bad alloc for new_dests\n");
     exit(-1);
   }
-  custom_vector<uint64_t> counts(num_workers+1);
+  // custom_vector<uint64_t> counts(num_workers+1);
+  custom_vector<uint64_t> counts;
   counts[0] = 0;
-  custom_vector<uint64_t> output_starts(num_workers);
+  // custom_vector<uint64_t> output_starts(num_workers);
+  custom_vector<uint64_t> output_starts;
   uint32_t increment_batch = edge_count / num_workers;
   //printf("starting merge\n");
   for(uint32_t i = 0; i < num_workers; i++) {
@@ -2991,7 +2997,7 @@ PMA::PMA(uint32_t init_n) {
     edges.dests[i] = NULL_VAL;
   }
   //TODO might be an issue if we grow it one at a time and let nodes be moved during operation
-  nodes.reserve(init_n);
+  // nodes.reserve(init_n);
   for (uint32_t i = 0; i < init_n; i++) {
     add_node();
   }
