@@ -24,7 +24,7 @@
 #pragma once
 #define WEIGHTED 0
 // #include "memory_pool.hpp"
-#include "Map.cpp"
+#include "Map.hpp"
 // #include "parallel_util.h"
 #include <climits>
 

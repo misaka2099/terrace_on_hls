@@ -25,7 +25,7 @@
 #pragma once
 #include "math.h"
 #include <iostream>
-#include "Map.cpp"
+#include "Map.hpp"
 // #include "memory_pool.hpp"
 
 // template <class vertex>

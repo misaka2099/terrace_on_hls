@@ -65,7 +65,7 @@ namespace graphstore {
 		custom_vector<uint32_t> vec;
 
 		for (uint32_t i = 0; i < num; i++)
-			vec[i] = i;
+			vec.push_back(i);
 
 		uint32_t cnt{0};
 		while (vec.size()) {

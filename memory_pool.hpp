@@ -8,8 +8,8 @@
 #include <iostream>
 #include <cstdint>
 #include <utility>
-#define POOL_SIZE 1048576  // 内存池大小
-#define BLOCK_SIZE 1024   // 每个内存块的大小
+const int POOL_SIZE = 1024 * 128;  // 内存池大小
+const int BLOCK_SIZE = 1024;   // 每个内存块的大小
 #include <string.h>
 
 
@@ -35,8 +35,7 @@
 })
 #define mymulnew(Type, Size) \
 ({      \
-    void* mem = mymalloc(sizeof(Type)*Size);                  \
-    Type* arr = reinterpret_cast<Type*>(mem);                        \
+    Type* arr= reinterpret_cast<Type*>(mymalloc(sizeof(Type)*Size));                  \
     for (int i = 0 ; i < Size ; i++) {new (&arr[i]) Type(); }\
     arr;\
 })      
@@ -54,6 +53,68 @@
 
 using Byte = unsigned char;
 
+// class _memory_pool 
+// {
+//     struct block 
+//     {
+//         Byte block_storage[BLOCK_SIZE];
+//         block *next;
+//         block()
+//         {
+//             next = nullptr;
+//             memset(block_storage, 0, sizeof(block_storage));
+//         }
+//     };
+//     block storage[POOL_SIZE/BLOCK_SIZE];
+//     block* cur;
+//     public:
+//     _memory_pool ()
+//     {
+//         for (int i = 0 ; i < POOL_SIZE/BLOCK_SIZE - 1 ; i++)
+//         {
+//             storage[i].next = &storage[i+1];
+//         }
+//         cur = storage;
+//     }
+//     ~_memory_pool()
+//     {}
+//     void* allocate()
+//     {
+//         if (cur == nullptr)
+//         { 
+//             std::cerr << "no enough space!!!!" << std::endl;
+//             return nullptr;
+//         }
+//         else  
+//         {
+//             block* x = cur;
+//             cur = cur->next;
+//             return x->block_storage;
+//         }
+//     }
+//     void deallocate(void* bin)
+//     {
+//         if (!bin)
+//         { 
+//             std::cerr << "bad deallocate!!!!" << std::endl;
+//             return;
+//         }
+//         block* to_deallocate = reinterpret_cast<block*>(
+//             reinterpret_cast<int8_t*>(bin) - offsetof(block, block_storage)
+//         );
+//         memset(bin, 0, sizeof(Byte)*BLOCK_SIZE);
+//         if (cur == nullptr)
+//         {
+//             cur = to_deallocate;
+//             cur->next = nullptr;
+//         }
+//         else  
+//         {
+//             to_deallocate->next = cur;
+//             cur = to_deallocate;
+//         }
+//     }
+// };
 class _memory_pool 
 {
     struct block 
@@ -62,10 +123,10 @@ class _memory_pool
         block *next;
         block()
         {
-            next = nullptr;
             memset(block_storage, 0, sizeof(block_storage));
         }
     };
+    int total;
     block storage[POOL_SIZE/BLOCK_SIZE];
     block* cur;
     public:
@@ -172,7 +233,6 @@ class custom_vector
     custom_vector()
     { 
         ptr = 0; 
-        memset(storage, 0, sizeof(storage));
     }
     void push_back(T val)
     {
@@ -233,7 +293,6 @@ class custom_stack
     custom_stack()
     { 
         ptr = 0; 
-        memset(storage, 0, sizeof(storage));
     }
     void push(T val)
     {
@@ -283,7 +342,6 @@ class custom_set
     int total = 0;
     custom_set()
     {
-        memset(storage, 0, sizeof(storage));
         memset(valid, 0, sizeof(valid));
     }
     class iterator 
@@ -367,7 +425,7 @@ class custom_set
     bool erase(const T& value) 
     {
         size_t hash = std::hash<T>{}(value) % capacity;
-        for (int it = storage[hash][0]; it < valid[hash]; ++it) {
+        for (int it = 0; it < valid[hash]; ++it) {
             if (storage[hash][it] == value) {
                 for (int i = it ; i < valid[hash] - 1; i++)
                 {
@@ -513,8 +571,9 @@ class custom_map
     };
     custom_map()
     {
-        memset(storage, 0, sizeof(storage));
-        memset(valid, 0, sizeof(valid));
+        for (int i = 0; i < capacity; i++) {
+            valid[i] = 0;
+        }
     }
     int count(Key key)
     { 

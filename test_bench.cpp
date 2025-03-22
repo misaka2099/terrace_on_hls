@@ -1,7 +1,30 @@
 #include "synthesize.hpp"
 #include "io_util.h"
+#include <sys/select.h>
+#include <stddef.h>
+#include <sys/time.h>
+#include <iostream>
+struct timeval startTime, endTime;
+struct timezone tz;
+
+void test_begin()
+{
+    gettimeofday(&startTime, NULL);
+}
+
+void test_end()
+{
+    gettimeofday(&endTime, NULL);
+}
+
+long elapsed()//ms
+{
+    long time_in_ms = endTime.tv_usec - startTime.tv_usec;
+    return time_in_ms;
+}
 int main()
 {
+    test_begin();
     Anstype ref;
     ref.BFS[0] = 1;
     ref.BFS[1] = 2;
@@ -90,6 +113,8 @@ int main()
             return -1;
         }
     }
+    test_end();
+    std::cout << elapsed() << std::endl;
     std::cout << "all right" << std::endl;
     return 0;
     

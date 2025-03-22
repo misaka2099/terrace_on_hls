@@ -27,7 +27,7 @@
 // optimized code, see "Multicore Triangle Computations Without
 // Tuning", ICDE 2015. Currently only works with uncompressed graphs,
 // and not with compressed graphs.
-#include "Map.cpp"
+#include "Map.hpp"
 // #include "memory_pool.hpp"
 //assumes sorted neighbor lists
 long countCommon(Graph &G, uint32_t a, uint32_t b) { 

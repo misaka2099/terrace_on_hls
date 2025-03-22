@@ -17,8 +17,8 @@ public:
       return true;
     }
     if (is_sparse) {
-      printf("shouldn't be calling has, is currently sparse\n");
-      exit(-1);
+      // printf("shouldn't be calling has, is currently sparse\n");
+      // exit(-1);
       return false;
     } else {
       return ba->get(i);
@@ -44,28 +44,28 @@ public:
     else if (is_sparse) return queue->size() > 0;
     else return ba->not_empty();
   }
-  void print() {
-    printf("is_sparse = %d\n", is_sparse);
-    if (all) {
-      printf("{0,...,%lu}\n", max_el);
-    } else if (is_sparse) {
-      const uint32_t start = queue->shared_out_start;
-      const uint32_t end = queue->shared_out_end;
-      printf("{");
-      for (uint32_t i = start; i < end; i++) {
-        printf("%d, ", queue->shared[i]);
-      }
-      printf("}\n");
-    } else {
-      printf("{");
-      for (uint32_t i = 0; i < max_el; i++) {
-        if (ba->get(i)) {
-          printf("%d, ", i);
-        }
-      }
-      printf("}\n");
-    }
-  }
+  // void print() {
+  //   printf("is_sparse = %d\n", is_sparse);
+  //   if (all) {
+  //     printf("{0,...,%lu}\n", max_el);
+  //   } else if (is_sparse) {
+  //     const uint32_t start = queue->shared_out_start;
+  //     const uint32_t end = queue->shared_out_end;
+  //     printf("{");
+  //     for (uint32_t i = start; i < end; i++) {
+  //       printf("%d, ", queue->shared[i]);
+  //     }
+  //     printf("}\n");
+  //   } else {
+  //     printf("{");
+  //     for (uint32_t i = 0; i < max_el; i++) {
+  //       if (ba->get(i)) {
+  //         printf("%d, ", i);
+  //       }
+  //     }
+  //     printf("}\n");
+  //   }
+  // }
   void insert(uint64_t i) {
     if (is_sparse) {
       queue_array[4 * 0].push_back(i);

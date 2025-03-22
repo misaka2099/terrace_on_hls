@@ -22,7 +22,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
-#include "Map.cpp"
+#include "Map.hpp"
 // #include "parallel_util.h"
 // #include "memory_pool.hpp"
 
@@ -113,7 +113,7 @@ uint32_t *CC(Graph &G) {
   for (uint32_t i = 0; i < n; i++) {
     components_set.insert(IDs[i]);
   }
-  printf("number of components is %lu\n", components_set.size());
+  // printf("number of components is %lu\n", components_set.size());
 #endif
   
   return IDs;

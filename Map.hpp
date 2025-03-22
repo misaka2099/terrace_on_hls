@@ -1,6 +1,6 @@
 #pragma once
 #include "graph.h"
-#include "VertexSubset.cpp"
+#include "VertexSubset.hpp"
 using namespace graphstore;
 
 template<class F>
@@ -73,18 +73,30 @@ VertexSubset edgeMap(Graph &G, VertexSubset &vs, F f, bool output = true, uint32
 }
 
 template<class F, bool output>
-struct VERTEX_MAP {
+struct VERTEX_MAP;
+
+template<class F>
+struct VERTEX_MAP<F, true> {
+  VertexSubset &output_vs;
+  F f;
+  VERTEX_MAP(VertexSubset &output_vs_, F f_) : output_vs(output_vs_), f(f_) {}
+  inline bool update(uint32_t val) {  
+      if (f(val) == 1) {
+        output_vs.insert(val);
+      }
+    return false;
+  }
+};
+
+template<class F>
+struct VERTEX_MAP<F, false> {
   VertexSubset &output_vs;
   F f;
   VERTEX_MAP(VertexSubset &output_vs_, F f_) : output_vs(output_vs_), f(f_) {}
   inline bool update(uint32_t val) {
-    if constexpr (output) {
-      if (f(val) == 1) {
-        output_vs.insert(val);
-      }
-    } else {
+    
       f(val);
-    }
+    
     return false;
   }
 };

@@ -252,7 +252,7 @@ void BTreeNode<T, W>::traverse() const {
     // traverse the subtree rooted with child C[i].
     if (!is_leaf)
       children[i]->traverse();
-    std::cout << keys[i] << " ";
+    // std::cout << keys[i] << " ";
   }
 
   // Print the subtree rooted with last child

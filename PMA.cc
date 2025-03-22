@@ -1,9 +1,10 @@
 # pragma once
 #include "util.h"
 #include <algorithm>
-using namespace std;
+// using namespace std;
 
 #include "PMA.hpp"
+#include "sort.h"
 // #include "memory_pool.hpp"
 # define assert(x)
 #define ENABLE_PMA_LOCK 0
@@ -14,7 +15,7 @@ static uint_t find_leaf(edge_list_t *list, uint_t index) {
 }
 
 
-static uint_t find_prev_valid(uint32_t volatile  * volatile dests, uint_t start) {
+static uint_t find_prev_valid(uint32_t *  dests, uint_t start) {
   while (dests[start] == NULL_VAL) {
     start--;
   }
@@ -167,7 +168,7 @@ void PMA::clear() {
 
 
 // TODO jump to next leaf
-custom_vector<tuple<uint32_t, uint32_t, uint32_t>> PMA::get_edges() {
+custom_vector<std::tuple<uint32_t, uint32_t, uint32_t>> PMA::get_edges() {
   // TODO grab locks in the lock list
   // for now, grabs the global lock
 #if ENABLE_PMA_LOCK == 1
@@ -175,7 +176,7 @@ custom_vector<tuple<uint32_t, uint32_t, uint32_t>> PMA::get_edges() {
 #endif
   // edges.list_lock.lock();
   uint64_t n = get_n();
-  custom_vector<tuple<uint32_t, uint32_t, uint32_t>> output;
+  custom_vector<std::tuple<uint32_t, uint32_t, uint32_t>> output;
 
   for (uint_t i = 0; i < n; i++) {
     uint_t start = nodes[i].beginning;
@@ -186,7 +187,7 @@ custom_vector<tuple<uint32_t, uint32_t, uint32_t>> PMA::get_edges() {
     for (uint_t j = start + 1; j < end; j++) {
       if (edges.dests[j]!=NULL_VAL) {
         output.push_back(
-            make_tuple(i, edges.dests[j], edges.vals[j]));
+          std::make_tuple(i, edges.dests[j], edges.vals[j]));
       }
     }
 #if ENABLE_PMA_LOCK == 1
@@ -440,7 +441,7 @@ void PMA::redistribute(uint_t index, uint64_t len) {
     space_vals = (uint32_t *)mymalloc(len * sizeof(*(edges.vals)));
     if (space_vals == 0) {
 
-      printf("bad malloc, len = %lu\n", len);
+      // printf("bad malloc, len = %lu\n", len);
       while (1){}
     }
     space_dests = (uint32_t *)mymalloc(len * sizeof(*(edges.dests)));
@@ -511,7 +512,7 @@ void PMA::redistribute(uint_t index, uint64_t len) {
   for (uint_t i = 0; i < num_leaves; i++) {
     uint_t count_for_leaf = count_per_leaf + (i < extra);
     uint_t in = index + (edges.logN * (i));
-    uint_t j2 = count_per_leaf*i + min(i,extra);
+    uint_t j2 = count_per_leaf*i + std::min(i,extra);
     //TODO could be parallized, but normally only up to size 32
     uint_t j3 = j2;
     memcpy(__builtin_assume_aligned((void*)&vals[in],16), (void*)&space_vals[j2], count_for_leaf*sizeof(uint32_t));
@@ -630,7 +631,7 @@ void PMA::redistribute_par(uint_t index, uint64_t len, custom_vector<uint_t> &su
   for (uint_t i = 0; i < num_leaves; i++) {
     uint_t count_for_leaf = count_per_leaf + (i < extra);
     uint_t in = index + ((i) << edges.loglogN);
-    uint_t j2 = count_per_leaf*i + min(i,extra);
+    uint_t j2 = count_per_leaf*i + std::min(i,extra);
     //TODO could be parallized, but normally only up to size 32
     uint_t j3 = j2;
     assert(j3 < len);
@@ -1064,7 +1065,7 @@ uint32_t PMA::find_contaning_node(uint_t index) {
     } else if (index >= node_end) {
       start = middle;
     } else {
-      printf("should not happen\n");
+      // printf("should not happen\n");
       assert(false);
     }
   }
@@ -1829,17 +1830,17 @@ void PMA::print_graph() {
     for (uint_t j = nodes[i].beginning + 1; j < nodes[i].end; j++) {
       if (edges.dests[j]!=NULL_VAL) {
         while (matrix_index < edges.dests[j]) {
-          printf("000 ");
+          // printf("000 ");
           matrix_index++;
         }
-        printf("%03d ", edges.vals[j]);
+        // printf("%03d ", edges.vals[j]);
         matrix_index++;
       }
     }
     for (uint32_t j = matrix_index; j < num_vertices; j++) {
-      printf("000 ");
+      // printf("000 ");
     }
-    printf("\n");
+    // printf("\n");
   }
 }
 
@@ -2285,8 +2286,8 @@ void PMA::add_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_cou
   // grab_all_locks(task_id, true, GENERAL);
   //std::sort(es, es + edge_count, sort_helper_x);
   //printf("starting sort\n");
-  sort(es, es+edge_count,[](const pair_uint& a, const pair_uint& b) { return a.y > b.y; });
-  sort(es, es+edge_count, [](const pair_uint& a,const pair_uint& b){return a.x > b.x;});
+  mysort<pair_uint>(es, edge_count,[](const pair_uint& a, const pair_uint& b) { return a.y > b.y; });
+  mysort<pair_uint>(es, edge_count, [](const pair_uint& a,const pair_uint& b){return a.x > b.x;});
   // integerSort_y((pair_els*)es, edge_count, get_n());
   // integerSort_x((pair_els*)es, edge_count, get_n());
   //printf("finished sort\n");
@@ -2312,13 +2313,15 @@ void PMA::add_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_cou
   uint32_t* vals = (uint32_t*) edges.vals;
   uint32_t* new_vals = (uint32_t*) mymalloc(new_size * sizeof(uint32_t));
   if (new_vals == NULL) {
-    printf("bad alloc for new_vals, trying to alloc something of size %lu\n", new_size);
-    exit(-1);
+    // printf("bad alloc for new_vals, trying to alloc something of size %lu\n", new_size);
+    // exit(-1);
+    return;
   }
   uint32_t* new_dests = (uint32_t*) mymalloc(new_size * sizeof(uint32_t));
   if (new_dests == NULL) {
-    printf("bad alloc for new_dests, trying to alloc something of size %lu\n", new_size);
-    exit(-1);
+    // printf("bad alloc for new_dests, trying to alloc something of size %lu\n", new_size);
+    // exit(-1);
+    return;
   }
 
   // custom_vector<uint64_t> counts(num_workers+1);
@@ -2387,14 +2390,16 @@ void PMA::add_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_cou
   uint32_t* dense_vals = (uint32_t*) mymalloc(result_idx * sizeof(uint32_t));
 
   if (dense_vals == NULL) {
-    printf("bad alloc for dense_vals\n");
-    exit(-1);
+    // printf("bad alloc for dense_vals\n");
+    // exit(-1);
+    return;
   }
 
   uint32_t* dense_dests = (uint32_t*) mymalloc(result_idx * sizeof(uint32_t));
   if (dense_dests == NULL) {
-    printf("bad alloc for dense_dests\n");
-    exit(-1);
+    // printf("bad alloc for dense_dests\n");
+    // exit(-1);
+    return;
   }
 
   // copy into dense array
@@ -2428,7 +2433,7 @@ void PMA::add_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_cou
   for(uint64_t i = 0; i < num_leaves; i++) {
     uint64_t count_for_leaf = count_per_leaf + (i < extra);
     uint64_t out_idx_start = i << edges.loglogN;
-    uint64_t in_idx_start = count_per_leaf * i + min(i, extra);
+    uint64_t in_idx_start = count_per_leaf * i + std::min(i, extra);
     uint64_t out_idx = out_idx_start;
     //printf("%lu, %lu, %lu, %lu\n", count_for_leaf, out_idx_start, in_idx_start, out_idx);
     for(uint64_t j = in_idx_start; j < in_idx_start + count_for_leaf; j++) {
@@ -2595,7 +2600,7 @@ void PMA::add_edge_batch_wrapper(pair_uint *es, uint64_t edge_count, int64_t thr
     }
     // node_lock.unlock_shared(0);
   } else { // large merge
-    printf("using large merge\n");
+    // printf("using large merge\n");
     add_edge_batch_update_no_val_parallel(es, edge_count);
   }
 }
@@ -2609,8 +2614,8 @@ void PMA::remove_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_
   // grab_all_locks(task_id, true, GENERAL);
   //std::sort(es, es + edge_count, sort_helper_x);
   //printf("starting sort\n");
-  sort(es, es+edge_count,[](const pair_uint& a, const pair_uint& b) { return a.y > b.y; });
-  sort(es, es+edge_count, [](const pair_uint& a,const pair_uint& b){return a.x > b.x;});
+  mysort<pair_uint>(es, edge_count,[](const pair_uint& a, const pair_uint& b) { return a.y > b.y; });
+  mysort<pair_uint>(es, edge_count, [](const pair_uint& a,const pair_uint& b){return a.x > b.x;});
   // integerSort_y((pair_els*)es, edge_count, get_n());
   // integerSort_x((pair_els*)es, edge_count, get_n());
   //printf("finished sort\n");
@@ -2625,13 +2630,15 @@ void PMA::remove_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_
   uint32_t* vals = (uint32_t*) edges.vals;
   uint32_t* new_vals = (uint32_t*) mymalloc(new_size * sizeof(uint32_t));
   if (new_vals == NULL) {
-    printf("bad alloc for new_vals\n");
-    exit(-1);
+    // printf("bad alloc for new_vals\n");
+    // exit(-1);
+    return;
   }
   uint32_t* new_dests = (uint32_t*) mymalloc(new_size * sizeof(uint32_t));
   if (new_dests == NULL) {
-    printf("bad alloc for new_dests\n");
-    exit(-1);
+    // printf("bad alloc for new_dests\n");
+    // exit(-1);
+    return;
   }
   // custom_vector<uint64_t> counts(num_workers+1);
   custom_vector<uint64_t> counts;
@@ -2703,14 +2710,16 @@ void PMA::remove_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_
   uint32_t* dense_vals = (uint32_t*) mymalloc(result_idx * sizeof(uint32_t));
 
   if (dense_vals == NULL) {
-    printf("bad alloc for dense_vals\n");
-    exit(-1);
+    // printf("bad alloc for dense_vals\n");
+    // exit(-1);
+    return;
   }
 
   uint32_t* dense_dests = (uint32_t*) mymalloc(result_idx * sizeof(uint32_t));
   if (dense_dests == NULL) {
-    printf("bad alloc for dense_dests\n");
-    exit(-1);
+    // printf("bad alloc for dense_dests\n");
+    // exit(-1);
+    return;
   }
 
   // copy into dense array
@@ -2744,7 +2753,7 @@ void PMA::remove_edge_batch_update_no_val_parallel(pair_uint *es, uint64_t edge_
   for(uint64_t i = 0; i < num_leaves; i++) {
     uint64_t count_for_leaf = count_per_leaf + (i < extra);
     uint64_t out_idx_start = i << edges.loglogN;
-    uint64_t in_idx_start = count_per_leaf * i + min(i, extra);
+    uint64_t in_idx_start = count_per_leaf * i + std::min(i, extra);
     uint64_t out_idx = out_idx_start;
     //printf("%lu, %lu, %lu, %lu\n", count_for_leaf, out_idx_start, in_idx_start, out_idx);
     for(uint64_t j = in_idx_start; j < in_idx_start + count_for_leaf; j++) {
@@ -2804,7 +2813,7 @@ void PMA::remove_edge_batch_wrapper(pair_uint *es, uint64_t edge_count, int64_t 
     }
     // node_lock.unlock_shared(0);
   } else { // large merge
-    printf("using large merge\n");
+    // printf("using large merge\n");
     remove_edge_batch_update_no_val_parallel(es, edge_count);
   }
 }
@@ -2968,7 +2977,7 @@ void PMA::remove_edge_batch(uint32_t *srcs, uint32_t *dests, uint_t edge_count) 
 PMA::PMA(uint32_t init_n) {
   next_task_id = 1;
   //making sure logN is at least 4
-  edges.N = max(2UL << bsr_word(init_n*2), 16UL);
+  edges.N = std::max(2UL << bsr_word(init_n*2), 16UL);
   // printf("%d\n", bsf_word(list->N));
   edges.loglogN = bsr_word(bsr_word(edges.N) + 1);
   edges.logN = (1 << edges.loglogN);

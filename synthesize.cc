@@ -1,8 +1,5 @@
 
 #include "memory_pool.hpp"
-
-#include <iostream>
-
 #include "graph.h"
 #include "BFS.h"
 #include "Pagerank.h"
@@ -12,7 +9,6 @@
 #include "BellmanFordUnweighted.h"
 #include "synthesize.hpp"
 using namespace graphstore;
-using std::cout;
 
 void BFS(Graph& G, int ans[])
 {

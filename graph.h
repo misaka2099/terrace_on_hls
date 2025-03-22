@@ -22,13 +22,13 @@
 #include "PMA.hpp"
 // #include "partitioned_counter.h"
 #include "btree.h"
-#include "BitArray.h"
+// #include "BitArray.h"
 #include "memory_pool.hpp"
 //#include "cpp-btree/btree_set.h"
 
 namespace graphstore {
 
-#define PREFETCH 1
+#define PREFETCH 0
 
 #if WEIGHTED
 #define NUM_IN_PLACE_NEIGHBORS 14
@@ -256,7 +256,7 @@ static inline void unlock(uint32_t *data)
 
 #if WEIGHTED
 inline void Graph::add_inplace(vertex *srcs, vertex	*dests, weight *wghts,
-													uint32_t idx, std::vector<uint32_t>& parts, uint8_t
+													uint32_t idx, custom_vector<uint32_t>& parts, uint8_t
 													*array_pma, uint8_t *array_btree, uint8_t
 													*array_btree_node) {
 #else
@@ -832,21 +832,21 @@ unlock:
     return num_vertices;
   }
 
-  inline void Graph::print_vertex_block(const vertex v) const {
-    std::cout << "Vertex: " << v << "\n";
-    std::cout << "Degree: " << vertices[v].degree << "\n";
-    std::cout << "In place neighbors: \n";
-    for (uint32_t i = 0; i < vertices[v].degree && i < NUM_IN_PLACE_NEIGHBORS;
-         i++) {
-      std::cout << vertices[v].neighbors[i] << ", "
-#if WEIGHTED
-        <<  vertices[v].weights[i]<< ", "
-#endif
-        ;
-    }
-    std::cout << '\b';
-    std::cout << '\b' << '\n';
-  }
+//   inline void Graph::print_vertex_block(const vertex v) const {
+//     std::cout << "Vertex: " << v << "\n";
+//     std::cout << "Degree: " << vertices[v].degree << "\n";
+//     std::cout << "In place neighbors: \n";
+//     for (uint32_t i = 0; i < vertices[v].degree && i < NUM_IN_PLACE_NEIGHBORS;
+//          i++) {
+//       std::cout << vertices[v].neighbors[i] << ", "
+// #if WEIGHTED
+//         <<  vertices[v].weights[i]<< ", "
+// #endif
+//         ;
+//     }
+//     // std::cout << '\b';
+//     // std::cout << '\b' << '\n';
+//   }
 
   inline Graph::NeighborIterator::NeighborIterator(const Graph *graph, Graph::vertex
                                             v) : g(graph), source(v),
